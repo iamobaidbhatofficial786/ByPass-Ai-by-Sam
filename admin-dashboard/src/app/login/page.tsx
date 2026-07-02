@@ -14,19 +14,33 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  const [errorMessage, setErrorMessage] = useState("")
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setErrorMessage("")
 
-    // Simulate API call
-    setTimeout(() => {
-      // Mock authentication
-      if (email && password) {
-        localStorage.setItem("admin_token", "mock_token")
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password })
+      });
+      const data = await res.json();
+      if (data.success && data.token) {
+        localStorage.setItem("admin_token", data.token)
         router.push("/")
+      } else {
+        setErrorMessage(data.error || "Authentication failed.")
       }
+    } catch (err: any) {
+      setErrorMessage("Network error: " + err.message)
+    } finally {
       setLoading(false)
-    }, 1000)
+    }
   }
 
   return (
@@ -61,6 +75,11 @@ export default function LoginPage() {
             </p>
           </CardHeader>
           <CardContent>
+            {errorMessage && (
+              <div className="mb-4 p-3 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg text-center">
+                {errorMessage}
+              </div>
+            )}
             <form onSubmit={handleLogin} className="space-y-4">
               {/* Email Input */}
               <div className="space-y-2">
